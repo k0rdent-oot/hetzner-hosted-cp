@@ -1,0 +1,474 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": [
+        "workersNumber",
+        "region"
+    ],
+    "properties": {
+        "clusterAnnotations": {
+            "description": "Annotations to apply to the cluster",
+            "type": "object",
+            "additionalProperties": true
+        },
+        "clusterLabels": {
+            "description": "Labels to apply to the cluster",
+            "type": "object",
+            "additionalProperties": true
+        },
+        "clusterNetwork": {
+            "description": "The cluster network configuration",
+            "type": "object",
+            "properties": {
+                "pods": {
+                    "description": "The network ranges from which Pod networks are allocated",
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "description": "A list of CIDR blocks",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "services": {
+                    "description": "The network ranges from which service VIPs are allocated",
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "description": "A list of CIDR blocks",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "controlPlane": {
+            "description": "Hosted control plane configuration",
+            "type": "object",
+            "properties": {
+                "certificateRefs": {
+                    "description": "Additional certificate references to include in the cluster configuration",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "controllerPlaneFlags": {
+                    "description": "Additional flags passed to the k0s controller",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "etcd": {
+                    "description": "Etcd configuration (image, persistence, resources, args)",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "ingress": {
+                    "description": "Ingress configuration for control plane access via management cluster load balancer",
+                    "type": "object",
+                    "properties": {
+                        "annotations": {
+                            "description": "Ingress annotations (must include SSL passthrough annotation)",
+                            "type": "object",
+                            "properties": {
+                                "haproxy-ingress.github.io/ssl-passthrough": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": true
+                        },
+                        "apiHost": {
+                            "description": "Hostname for Kubernetes API (e.g., api.cluster01.example.com) - REQUIRED when ingress is enabled",
+                            "type": "string"
+                        },
+                        "className": {
+                            "description": "Ingress class name (must support SSL passthrough, e.g., haproxy, nginx, traefik)",
+                            "type": "string"
+                        },
+                        "enabled": {
+                            "description": "Enable ingress for control plane access (requires k0s v1.34.1+k0s.0 or later)",
+                            "type": "boolean"
+                        },
+                        "konnectivityHost": {
+                            "description": "Hostname for konnectivity server (e.g., konnectivity.cluster01.example.com) - REQUIRED when ingress is enabled",
+                            "type": "string"
+                        }
+                    }
+                },
+                "manifests": {
+                    "description": "Extra volumes with manifests to deploy into the child cluster via k0s manifest sideloading",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "monitoring": {
+                    "description": "Prometheus sidecar monitoring configuration",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "mounts": {
+                    "description": "Extra volumes to mount into the control plane pod",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "persistence": {
+                    "description": "Persistence configuration for the k0s data directory (emptyDir by default)",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "replicas": {
+                    "description": "Number of control plane pod replicas",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "resources": {
+                    "description": "Compute resource requirements for the control plane pod",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "service": {
+                    "description": "Service configuration for control plane access",
+                    "type": "object",
+                    "properties": {
+                        "annotations": {
+                            "description": "Extra annotations for the service",
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "apiPort": {
+                            "description": "Kubernetes API port (k0smotron picks automatically if empty)",
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        },
+                        "externalTrafficPolicy": {
+                            "description": "External traffic policy (Cluster or Local, for NodePort/LoadBalancer only)",
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "Cluster",
+                                "Local",
+                                null
+                            ]
+                        },
+                        "konnectivityPort": {
+                            "description": "Konnectivity server port (k0smotron picks automatically if empty)",
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        },
+                        "labels": {
+                            "description": "Extra labels for the service",
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "loadBalancerClass": {
+                            "description": "Load balancer class (for LoadBalancer type only)",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "type": {
+                            "description": "Service type (ClusterIP for ingress, LoadBalancer for direct access, NodePort for dev)",
+                            "type": "string",
+                            "enum": [
+                                "ClusterIP",
+                                "NodePort",
+                                "LoadBalancer"
+                            ]
+                        }
+                    }
+                },
+                "serviceAccount": {
+                    "description": "Service account name for the control plane StatefulSet",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "topologySpreadConstraints": {
+                    "description": "Topology spread constraints applied to both etcd and k0s pods",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "controlPlaneLoadBalancer": {
+            "description": "Control plane load balancer configuration",
+            "type": "object",
+            "properties": {
+                "extraServices": {
+                    "description": "Additional services to expose through the load balancer",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "hcloudNetwork": {
+            "description": "Hetzner private network configuration",
+            "type": "object",
+            "properties": {
+                "cidrBlock": {
+                    "description": "CIDR block for the private network",
+                    "type": "string"
+                },
+                "enabled": {
+                    "description": "Enable private network for the cluster",
+                    "type": "boolean"
+                },
+                "networkZone": {
+                    "description": "Network zone for the private network",
+                    "type": "string"
+                },
+                "subnetCidrBlock": {
+                    "description": "Subnet CIDR block for the private network",
+                    "type": "string"
+                }
+            }
+        },
+        "k0s": {
+            "description": "k0s specific settings",
+            "type": "object",
+            "required": [
+                "version"
+            ],
+            "properties": {
+                "api": {
+                    "description": "k0s API configuration",
+                    "type": "object",
+                    "properties": {
+                        "extraArgs": {
+                            "description": "Extra arguments for the k0s API",
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                },
+                "arch": {
+                    "description": "k0s binary architecture",
+                    "type": "string"
+                },
+                "network": {
+                    "description": "Network configuration for k0s",
+                    "type": "object",
+                    "properties": {
+                        "provider": {
+                            "description": "Network provider (custom to disable default CNI)",
+                            "type": "string"
+                        }
+                    }
+                },
+                "version": {
+                    "description": "The k0s version to use",
+                    "type": "string"
+                }
+            }
+        },
+        "labels": {
+            "description": "Labels to apply to Hetzner resources",
+            "type": "object",
+            "additionalProperties": true
+        },
+        "placementGroupName": {
+            "description": "Name of the placement group to use for nodes",
+            "type": "string"
+        },
+        "region": {
+            "description": "The Hetzner region name (e.g., fsn1, nbg1, hel1)",
+            "type": "string"
+        },
+        "sshKeyNames": {
+            "description": "SSH key names to use for cluster nodes",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "tokenRef": {
+            "description": "Reference to the secret containing Hetzner API token",
+            "type": "object",
+            "required": [
+                "name",
+                "key"
+            ],
+            "properties": {
+                "key": {
+                    "description": "Key in the secret containing the token",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the secret",
+                    "type": "string"
+                }
+            }
+        },
+        "worker": {
+            "description": "The configuration of the worker machines",
+            "type": "object",
+            "required": [
+                "image",
+                "type"
+            ],
+            "properties": {
+                "additionalSecurityGroups": {
+                    "description": "Additional security groups to attach",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "dataDisks": {
+                    "description": "Additional data disks to attach",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "image": {
+                    "description": "The name of the Hetzner server image",
+                    "type": "string"
+                },
+                "placementGroupName": {
+                    "description": "The placement group name for worker nodes",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of Hetzner server to create (e.g., cpx32, cpx22, cax21)",
+                    "type": "string"
+                }
+            }
+        },
+        "workerConfig": {
+            "description": "The configuration of the k0s worker",
+            "type": "object",
+            "properties": {
+                "args": {
+                    "description": "Extra arguments passed to the k0s worker",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "customUserDataRef": {
+                    "description": "Reference to a ConfigMap or Secret containing custom user data",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "downloadURL": {
+                    "description": "Custom URL to download the k0s binary from",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "files": {
+                    "description": "Files to provision on worker nodes",
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "ignition": {
+                    "description": "Ignition configuration for CoreOS/Flatcar-based nodes",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "k0sInstallDir": {
+                    "description": "Directory to install k0s binary into",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "postStartCommands": {
+                    "title": "Post-start commands",
+                    "description": "Additional commands to run after k0s starts",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "preInstalledK0s": {
+                    "description": "Skip k0s installation (assume already installed)",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "preStartCommands": {
+                    "title": "Pre-start commands",
+                    "description": "Commands to run before k0s starts",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "secretMetadata": {
+                    "description": "Labels and annotations to propagate to the bootstrap Secret",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "additionalProperties": true
+                },
+                "useSystemHostname": {
+                    "description": "Use the system hostname instead of the machine object name",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "workingDir": {
+                    "description": "Working directory for k0s",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "workersNumber": {
+            "description": "The number of the worker machines",
+            "type": "integer",
+            "minimum": 1
+        }
+    }
+}

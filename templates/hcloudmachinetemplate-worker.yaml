@@ -1,0 +1,21 @@
+{{/* HCloudMachineTemplate - Hetzner Cloud machine configuration for worker nodes */}}
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: HCloudMachineTemplate
+metadata:
+  name: {{ include "hcloudmachinetemplate.worker.name" . }}
+spec:
+  template:
+    spec:
+      type: {{ .Values.worker.type }}
+      imageName: {{ .Values.worker.image }}
+      {{- if .Values.worker.placementGroupName }}
+      placementGroupName: {{ .Values.worker.placementGroupName }}
+      {{- end }}
+      {{- if .Values.worker.dataDisks }}
+      dataDisks:
+        {{- toYaml .Values.worker.dataDisks | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.additionalSecurityGroups }}
+      additionalSecurityGroups:
+        {{- toYaml .Values.worker.additionalSecurityGroups | nindent 8 }}
+      {{- end }}

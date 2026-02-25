@@ -1,0 +1,23 @@
+{{/* MachineDeployment - worker node lifecycle management */}}
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: MachineDeployment
+metadata:
+  name: {{ include "machinedeployment.name" . }}
+spec:
+  clusterName: {{ include "cluster.name" . }}
+  replicas: {{ .Values.workersNumber }}
+  selector:
+    matchLabels: {}
+  template:
+    spec:
+      clusterName: {{ include "cluster.name" . }}
+      version: {{ .Values.k0s.version }}
+      bootstrap:
+        configRef:
+          apiGroup: bootstrap.cluster.x-k8s.io
+          kind: K0sWorkerConfigTemplate
+          name: {{ include "k0sworkerconfigtemplate.name" . }}
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: HCloudMachineTemplate
+        name: {{ include "hcloudmachinetemplate.worker.name" . }}

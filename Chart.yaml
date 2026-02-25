@@ -1,0 +1,14 @@
+annotations:
+  cluster.x-k8s.io/bootstrap-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/control-plane-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/infrastructure-hetzner: v1beta1
+  cluster.x-k8s.io/provider: infrastructure-hetzner, control-plane-k0sproject-k0smotron,
+    bootstrap-k0sproject-k0smotron
+  cluster.x-k8s.io/v1beta2: v1beta2_supported
+  meta.helm.sh/release-namespace: kcm-system
+apiVersion: v2
+appVersion: v1.10.2
+description: 'Helm chart for deploying Kubernetes clusters on Hetzner Cloud using k0smotron hosted control plane architecture. Control plane runs as pods in the management cluster while worker nodes are provisioned on Hetzner infrastructure, reducing costs and simplifying operations.'
+name: hetzner-hosted-cp
+type: application
+version: 0.0.1

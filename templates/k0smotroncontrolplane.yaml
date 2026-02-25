@@ -1,0 +1,111 @@
+{{/* K0smotronControlPlane - hosted control plane running as pods in the management cluster */}}
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: K0smotronControlPlane
+metadata:
+  name: {{ include "k0smotroncontrolplane.name" . }}
+spec:
+  version: {{ .Values.k0s.version }}
+  replicas: {{ .Values.controlPlane.replicas | default 1 }}
+  {{- if and .Values.controlPlane.ingress.enabled .Values.controlPlane.ingress.apiHost .Values.controlPlane.ingress.konnectivityHost }}
+  ingress:
+    deploy: true
+    {{- if .Values.controlPlane.ingress.className }}
+    className: {{ .Values.controlPlane.ingress.className }}
+    {{- end }}
+    {{- with .Values.controlPlane.ingress.annotations }}
+    annotations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    apiHost: {{ .Values.controlPlane.ingress.apiHost }}
+    konnectivityHost: {{ .Values.controlPlane.ingress.konnectivityHost }}
+  {{- end }}
+  service:
+    type: {{ .Values.controlPlane.service.type | default "ClusterIP" }}
+    {{- with .Values.controlPlane.service.apiPort }}
+    apiPort: {{ . }}
+    {{- end }}
+    {{- with .Values.controlPlane.service.konnectivityPort }}
+    konnectivityPort: {{ . }}
+    {{- end }}
+    {{- with .Values.controlPlane.service.annotations }}
+    annotations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.controlPlane.service.labels }}
+    labels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.controlPlane.service.externalTrafficPolicy }}
+    externalTrafficPolicy: {{ . }}
+    {{- end }}
+    {{- with .Values.controlPlane.service.loadBalancerClass }}
+    loadBalancerClass: {{ . }}
+    {{- end }}
+  {{- with .Values.controlPlane.persistence }}
+  persistence:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.etcd }}
+  etcd:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.topologySpreadConstraints }}
+  topologySpreadConstraints:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.monitoring }}
+  monitoring:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.manifests }}
+  manifests:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.mounts }}
+  mounts:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.controllerPlaneFlags }}
+  controllerPlaneFlags:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.controlPlane.serviceAccount }}
+  serviceAccount: {{ . }}
+  {{- end }}
+  {{- with .Values.controlPlane.certificateRefs }}
+  certificateRefs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  k0sConfig:
+    apiVersion: k0s.k0sproject.io/v1beta1
+    kind: ClusterConfig
+    metadata:
+      name: k0s
+    spec:
+      api:
+        sans:
+          {{- if and .Values.controlPlane.ingress.enabled .Values.controlPlane.ingress.apiHost }}
+          - {{ .Values.controlPlane.ingress.apiHost }}
+          {{- end }}
+          {{- if and .Values.controlPlane.ingress.enabled .Values.controlPlane.ingress.konnectivityHost }}
+          - {{ .Values.controlPlane.ingress.konnectivityHost }}
+          {{- end }}
+          - "kmc-{{ include "cluster.name" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+        extraArgs:
+          anonymous-auth: "true"
+          {{- with .Values.k0s.api.extraArgs }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+      {{- with .Values.k0s.network }}
+      network: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      extensions:
+        helm:
+          repositories: []
+          charts: []
+      telemetry:
+        enabled: false

@@ -1,0 +1,52 @@
+{{/* K0sWorkerConfigTemplate - k0s configuration for worker nodes */}}
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: K0sWorkerConfigTemplate
+metadata:
+  name: {{ include "k0sworkerconfigtemplate.name" . }}
+spec:
+  template:
+    spec:
+      version: {{ .Values.k0s.version }}
+      {{- with .Values.workerConfig.args }}
+      args:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.preStartCommands }}
+      preStartCommands:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.postStartCommands }}
+      postStartCommands:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.files }}
+      files:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.downloadURL }}
+      downloadURL: {{ . }}
+      {{- end }}
+      {{- with .Values.workerConfig.k0sInstallDir }}
+      k0sInstallDir: {{ . }}
+      {{- end }}
+      {{- with .Values.workerConfig.workingDir }}
+      workingDir: {{ . }}
+      {{- end }}
+      {{- if not (eq .Values.workerConfig.preInstalledK0s nil) }}
+      preInstalledK0s: {{ .Values.workerConfig.preInstalledK0s }}
+      {{- end }}
+      {{- if not (eq .Values.workerConfig.useSystemHostname nil) }}
+      useSystemHostname: {{ .Values.workerConfig.useSystemHostname }}
+      {{- end }}
+      {{- with .Values.workerConfig.ignition }}
+      ignition:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.customUserDataRef }}
+      customUserDataRef:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workerConfig.secretMetadata }}
+      secretMetadata:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

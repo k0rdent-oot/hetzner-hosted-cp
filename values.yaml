@@ -1,0 +1,96 @@
+# Cluster parameters
+workersNumber: 2 # @schema description: The number of the worker machines; minimum: 1; type: integer; required: true
+
+# Control plane configuration (hosted in management cluster)
+# Default mode: Ingress with hostname-based routing (recommended for production)
+# Alternative modes: Set ingress.enabled=false and use service.type=LoadBalancer or NodePort
+controlPlane: # @schema description: Hosted control plane configuration; type: object
+  replicas: 1 # @schema description: Number of control plane pod replicas; minimum: 1; type: integer
+  service: # @schema description: Service configuration for control plane access; type: object
+    type: "ClusterIP" # @schema description: Service type (ClusterIP for ingress, LoadBalancer for direct access, NodePort for dev); type: string; enum: ClusterIP, NodePort, LoadBalancer
+    apiPort: null # @schema description: Kubernetes API port (k0smotron picks automatically if empty); type: [integer, "null"]
+    konnectivityPort: null # @schema description: Konnectivity server port (k0smotron picks automatically if empty); type: [integer, "null"]
+    annotations: {} # @schema description: Extra annotations for the service; type: object; additionalProperties: true
+    labels: {} # @schema description: Extra labels for the service; type: object; additionalProperties: true
+    externalTrafficPolicy: null # @schema description: External traffic policy (Cluster or Local, for NodePort/LoadBalancer only); type: [string, "null"]; enum: Cluster, Local, null
+    loadBalancerClass: null # @schema description: Load balancer class (for LoadBalancer type only); type: [string, "null"]
+  ingress: # @schema description: Ingress configuration for control plane access via management cluster load balancer; type: object
+    enabled: true # @schema description: Enable ingress for control plane access (requires k0s v1.34.1+k0s.0 or later); type: boolean
+    className: "haproxy" # @schema description: Ingress class name (must support SSL passthrough, e.g., haproxy, nginx, traefik); type: string
+    apiHost: "" # @schema description: Hostname for Kubernetes API (e.g., api.cluster01.example.com) - REQUIRED when ingress is enabled; type: string
+    konnectivityHost: "" # @schema description: Hostname for konnectivity server (e.g., konnectivity.cluster01.example.com) - REQUIRED when ingress is enabled; type: string
+    annotations: # @schema description: Ingress annotations (must include SSL passthrough annotation); type: object; additionalProperties: true
+      haproxy-ingress.github.io/ssl-passthrough: "true"
+  persistence: null # @schema description: Persistence configuration for the k0s data directory (emptyDir by default); type: [object, "null"]; additionalProperties: true
+  etcd: null # @schema description: Etcd configuration (image, persistence, resources, args); type: [object, "null"]; additionalProperties: true
+  resources: null # @schema description: Compute resource requirements for the control plane pod; type: [object, "null"]; additionalProperties: true
+  topologySpreadConstraints: [] # @schema description: Topology spread constraints applied to both etcd and k0s pods; type: array; item: object
+  monitoring: null # @schema description: Prometheus sidecar monitoring configuration; type: [object, "null"]; additionalProperties: true
+  manifests: [] # @schema description: Extra volumes with manifests to deploy into the child cluster via k0s manifest sideloading; type: array; item: object
+  mounts: [] # @schema description: Extra volumes to mount into the control plane pod; type: array; item: object
+  controllerPlaneFlags: [] # @schema description: Additional flags passed to the k0s controller; type: array; item: string
+  serviceAccount: null # @schema description: Service account name for the control plane StatefulSet; type: [string, "null"]
+  certificateRefs: [] # @schema description: Additional certificate references to include in the cluster configuration; type: array; item: object
+
+clusterNetwork: # @schema description: The cluster network configuration; type: object
+  pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.244.0.0/16"
+  services: # @schema description: The network ranges from which service VIPs are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; item: string
+      - "10.96.0.0/12"
+
+clusterLabels: {} # @schema description: Labels to apply to the cluster; type: object; additionalProperties: true
+clusterAnnotations: {} # @schema description: Annotations to apply to the cluster; type: object; additionalProperties: true
+
+# Hetzner cluster parameters
+region: "" # @schema description: The Hetzner region name (e.g., fsn1, nbg1, hel1); type: string; required: true
+sshKeyNames: [] # @schema description: SSH key names to use for cluster nodes; type: array; item: string
+tokenRef: # @schema description: Reference to the secret containing Hetzner API token; type: object
+  name: "" # @schema description: Name of the secret; type: string; required: true
+  key: "hcloud-token" # @schema description: Key in the secret containing the token; type: string; required: true
+placementGroupName: "" # @schema description: Name of the placement group to use for nodes; type: string
+labels: {} # @schema description: Labels to apply to Hetzner resources; type: object; additionalProperties: true
+controlPlaneLoadBalancer: # @schema description: Control plane load balancer configuration; type: object
+  extraServices: [] # @schema description: Additional services to expose through the load balancer; type: array; item: object
+hcloudNetwork: # @schema description: Hetzner private network configuration; type: object
+  enabled: true # @schema description: Enable private network for the cluster; type: boolean
+  cidrBlock: "10.0.0.0/16" # @schema description: CIDR block for the private network; type: string
+  subnetCidrBlock: "10.0.0.0/24" # @schema description: Subnet CIDR block for the private network; type: string
+  networkZone: "eu-central" # @schema description: Network zone for the private network; type: string
+
+# Hetzner worker machine parameters
+worker: # @schema description: The configuration of the worker machines; type: object
+  image: ubuntu-24.04 # @schema description: The name of the Hetzner server image; type: string; required: true
+  type: cpx32 # @schema description: The type of Hetzner server to create (e.g., cpx32, cpx22, cax21); type: string; required: true
+  placementGroupName: "" # @schema description: The placement group name for worker nodes; type: string
+  dataDisks: [] # @schema description: Additional data disks to attach; type: array; item: object
+  additionalSecurityGroups: [] # @schema description: Additional security groups to attach; type: array; item: object
+
+# k0s parameters
+k0s: # @schema description: k0s specific settings; type: object
+  version: v1.34.4+k0s.0 # @schema description: The k0s version to use; type: string; required: true
+  arch: amd64 # @schema description: k0s binary architecture; type: string
+  api: # @schema description: k0s API configuration; type: object
+    extraArgs: {} # @schema description: Extra arguments for the k0s API; type: object; additionalProperties: true
+  network: # @schema description: Network configuration for k0s; type: object
+    provider: custom # @schema description: Network provider (custom to disable default CNI); type: string
+
+# Worker k0s configuration
+workerConfig: # @schema description: The configuration of the k0s worker; type: object
+  args: [] # @schema description: Extra arguments passed to the k0s worker; type: array; item: string
+  preStartCommands: # @schema title: Pre-start commands; description: Commands to run before k0s starts; type: array; item: string
+    - systemctl disable --now systemd-resolved || true
+    - rm -f /etc/resolv.conf && printf "nameserver 1.1.1.1\nnameserver 1.0.0.1\nnameserver 2606:4700:4700::1111\n" > /etc/resolv.conf
+    - swapoff -a || true
+    - sed -i '/ swap / s/^/#/' /etc/fstab || true
+  postStartCommands: [] # @schema title: Post-start commands; description: Additional commands to run after k0s starts; type: array; item: string
+  files: [] # @schema description: Files to provision on worker nodes; type: array; item: object
+  downloadURL: null # @schema description: Custom URL to download the k0s binary from; type: [string, "null"]
+  k0sInstallDir: null # @schema description: Directory to install k0s binary into; type: [string, "null"]
+  workingDir: null # @schema description: Working directory for k0s; type: [string, "null"]
+  preInstalledK0s: null # @schema description: Skip k0s installation (assume already installed); type: [boolean, "null"]
+  useSystemHostname: null # @schema description: Use the system hostname instead of the machine object name; type: [boolean, "null"]
+  ignition: null # @schema description: Ignition configuration for CoreOS/Flatcar-based nodes; type: [object, "null"]; additionalProperties: true
+  customUserDataRef: null # @schema description: Reference to a ConfigMap or Secret containing custom user data; type: [object, "null"]; additionalProperties: true
+  secretMetadata: null # @schema description: Labels and annotations to propagate to the bootstrap Secret; type: [object, "null"]; additionalProperties: true

@@ -1,0 +1,42 @@
+{{/* HetznerCluster - Hetzner Cloud infrastructure configuration */}}
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: HetznerCluster
+metadata:
+  name: {{ include "cluster.name" . }}
+  finalizers:
+    - k0rdent.mirantis.com/cleanup
+spec:
+  controlPlaneRegions:
+    - {{ .Values.region }}
+  {{- if .Values.sshKeyNames }}
+  sshKeys:
+    hcloud:
+    {{- range .Values.sshKeyNames }}
+      - name: {{ . }}
+    {{- end }}
+  {{- end }}
+  {{- if .Values.placementGroupName }}
+  placementGroups:
+    - name: {{ .Values.placementGroupName }}
+      type: spread
+  {{- end }}
+  {{- if .Values.labels }}
+  labels:
+    {{- toYaml .Values.labels | nindent 4 }}
+  {{- end }}
+  controlPlaneLoadBalancer:
+    enabled: false
+  controlPlaneEndpoint:
+    host: {{ .Values.controlPlane.ingress.apiHost | quote }}
+    port: 443
+  {{- if .Values.hcloudNetwork }}
+  hcloudNetwork:
+    enabled: {{ .Values.hcloudNetwork.enabled }}
+    cidrBlock: {{ .Values.hcloudNetwork.cidrBlock | quote }}
+    subnetCidrBlock: {{ .Values.hcloudNetwork.subnetCidrBlock | quote }}
+    networkZone: {{ .Values.hcloudNetwork.networkZone | quote }}
+  {{- end }}
+  hetznerSecretRef:
+    name: {{ .Values.tokenRef.name }}
+    key:
+      hcloudToken: {{ .Values.tokenRef.key }}
